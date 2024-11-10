@@ -1,0 +1,1 @@
+INSERT IGNORE INTO `user`.`user_profiles` (`id`, `account`, `password`, `email`, `phone_number`, `created_at`, `updated_at`) VALUES (0, 'admin', 'admin', NULL, NULL, '2024-11-08 01:08:02', '2024-11-08 01:08:02');
