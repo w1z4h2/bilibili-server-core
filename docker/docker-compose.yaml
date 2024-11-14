@@ -1,0 +1,120 @@
+services:
+  consul-server-01:
+    image: consul:1.15.4
+    container_name: consul-server-01
+    command: "agent -server -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul.log -node=consul-server-01 -bootstrap-expect=3"
+    volumes:
+      - /home/wuzhenhua/docker/consul/server/consul-server-01/data:/consul/data
+      - /home/wuzhenhua/docker/consul/server/consul-server-01/log:/consul/log/
+    networks:
+      - bilibili-network
+    restart: always
+
+  consul-server-02:
+    depends_on:
+      - consul-server-01
+    image: consul:1.15.4
+    container_name: consul-server-02
+    command: "agent -server -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul.log -node=consul-server-02 -bootstrap-expect=3 -retry-join=consul-server-01"
+    volumes:
+      - /home/wuzhenhua/docker/consul/server/consul-server-02/data:/consul/data
+      - /home/wuzhenhua/docker/consul/server/consul-server-02/log:/consul/log/
+    networks:
+      - bilibili-network
+    restart: always
+
+  consul-server-03:
+    depends_on:
+      - consul-server-01
+    image: consul:1.15.4
+    container_name: consul-server-03
+    command: "agent -server -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul.log -node=consul-server-03 -bootstrap-expect=3 -retry-join=consul-server-01"
+    volumes:
+      - /home/wuzhenhua/docker/consul/server/consul-server-03/data:/consul/data
+      - /home/wuzhenhua/docker/consul/server/consul-server-03/log:/consul/log/
+    networks:
+      - bilibili-network
+    restart: always
+
+  consul-client-gateway:
+    depends_on:
+      - consul-server-01
+    image: consul:1.15.4
+    container_name: consul-client-gateway
+    command: "agent -ui -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul-client-gateway.log -node=consul-client-gateway -retry-join=consul-server-01"
+    volumes:
+      - /home/wuzhenhua/docker/consul/client/consul-client-gateway/data:/consul/data
+      - /home/wuzhenhua/docker/consul/client/consul-client-gateway/log:/consul/log/
+    networks:
+      - bilibili-network
+    ports:
+      - 8500:8500
+    restart: always
+
+  consul-client-user:
+    depends_on:
+      - consul-server-01
+    image: consul:1.15.4
+    container_name: consul-client-user
+    command: "agent -ui -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul-client-user.log -node=consul-client-user -retry-join=consul-server-01"
+    volumes:
+      - /home/wuzhenhua/docker/consul/client/consul-client-user/data:/consul/data
+      - /home/wuzhenhua/docker/consul/client/consul-client-user/log:/consul/log/
+    networks:
+      - bilibili-network
+    ports:
+      - 8501:8500
+    restart: always
+
+  mysql:
+    image: mysql
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - /home/wuzhenhua/docker/mysql/my.cnf:/etc/my.cnf
+      - /home/wuzhenhua/docker/mysql/my.cnf.d:/etc/my.cnf.d
+      - /home/wuzhenhua/docker/mysql/mysql:/etc/mysql
+      - /home/wuzhenhua/docker/mysql/data:/var/lib/mysql
+      - /home/wuzhenhua/docker/mysql/log:/var/log/mysql
+    networks:
+      - bilibili-network
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    restart: always
+
+  user-service:
+    depends_on:
+      - consul-client-user
+      - mysql
+    image: user-service
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    volumes:
+      - /home/wuzhenhua/docker/java/user/user-service.jar:/java/user-service.jar
+      - /home/wuzhenhua/docker/java/user/application.yml:/java/config/application.yml
+      - /home/wuzhenhua/docker/java/user/log:/java/log
+    networks:
+      - bilibili-network
+    restart: always
+
+  gateway-service:
+    depends_on:
+      - consul-client-gateway
+      - mysql
+    image: gateway-service
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    volumes:
+      - /home/wuzhenhua/docker/java/gateway/gateway-service.jar:/java/gateway-service.jar
+      - /home/wuzhenhua/docker/java/gateway/application.yml:/java/config/application.yml
+      - /home/wuzhenhua/docker/java/gateway/log:/java/log
+    networks:
+      - bilibili-network
+    restart: always
+
+networks:
+  bilibili-network:
+    name: bilibili-network

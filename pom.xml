@@ -29,6 +29,7 @@
         <spring-cloud.version>Hoxton.SR10</spring-cloud.version>
         <jjwt.version>0.9.1</jjwt.version>
         <mybatis-plus-boot-starter.version>3.5.9</mybatis-plus-boot-starter.version>
+        <hutool-all.version>5.8.33</hutool-all.version>
     </properties>
 
     <dependencyManagement>

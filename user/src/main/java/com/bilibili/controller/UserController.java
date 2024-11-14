@@ -1,5 +1,6 @@
 package com.bilibili.controller;
 
+import com.bilibili.context.UserContext;
 import com.bilibili.pojo.dto.user.LoginDTO;
 import com.bilibili.result.Result;
 import com.bilibili.service.UserProfilesService;
@@ -19,6 +20,7 @@ public class UserController {
 
     @PostMapping("/login")
     public Result<Void> login(@RequestBody LoginDTO loginDTO, HttpServletResponse response) {
+        System.out.println(UserContext.get());
         String token = userProfilesService.login(loginDTO);
         response.setHeader("Authorization", "Bearer " + token);
         return Result.success();

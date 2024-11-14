@@ -1,42 +1,47 @@
 package com.bilibili.filter;
 
+import cn.hutool.json.JSONUtil;
 import com.bilibili.context.pojo.UserInfo;
 import com.bilibili.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 @Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter implements WebFilter, Ordered {
 
     private static final String[] EXCLUDED_URLS = {"/user/login"};
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String requestURI = request.getRequestURI();
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        String requestURI = exchange.getRequest().getURI().getPath();
+
+        // 排除某些不需要 JWT 校验的路径
         if (isExcludedUrl(requestURI)) {
-            filterChain.doFilter(request, response);
-            return;
+            return chain.filter(exchange);
         }
 
-        String oldToken = request.getHeader("Authorization").split(" ")[1];
+        String authorization = exchange.getRequest().getHeaders().getFirst("Authorization");
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            String token = authorization.substring(7);
 
-        Claims claims = JwtUtil.validateToken(oldToken);
-        UserInfo userInfo = UserInfo.builder()
-                .userId(Long.valueOf(claims.getSubject()))
-                .build();
-        request.setAttribute("userInfo", userInfo);
+            Claims claims = JwtUtil.validateToken(token);
+            if (claims != null) {
+                UserInfo userInfo = UserInfo.builder()
+                        .userId(Long.valueOf(claims.getSubject()))
+                        .build();
+                exchange.getRequest().mutate().header("userInfo", JSONUtil.toJsonStr(userInfo)).build();
 
-        String newToken = JwtUtil.refreshToken(oldToken);
-        response.setHeader("Authorization", "Bearer " + newToken);
+                String newToken = JwtUtil.refreshToken(token);
+                exchange.getResponse().getHeaders().set("Authorization", "Bearer " + newToken);
+            }
+        }
 
-        filterChain.doFilter(request, response);
+        return chain.filter(exchange);
     }
 
     private boolean isExcludedUrl(String requestURI) {
@@ -47,4 +52,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return false;
     }
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE + 1;
+    }
 }
+

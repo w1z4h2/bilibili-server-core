@@ -1,18 +1,20 @@
 package com.bilibili.context;
 
 
-public class UserContext {
-    private static ThreadLocal<UserContext> userContextThreadLocal = new ThreadLocal<UserContext>();
+import com.bilibili.context.pojo.UserInfo;
 
-    public static UserContext getUserContext() {
+public class UserContext {
+    private static final ThreadLocal<UserInfo> userContextThreadLocal = new ThreadLocal<>();
+
+    public static UserInfo get() {
         return userContextThreadLocal.get();
     }
 
-    public static void setUserContext(UserContext userContext) {
-        userContextThreadLocal.set(userContext);
+    public static void set(UserInfo userInfo) {
+        userContextThreadLocal.set(userInfo);
     }
 
-    public static void removeUserContext() {
+    public static void remove() {
         userContextThreadLocal.remove();
     }
 }

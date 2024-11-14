@@ -1,0 +1,63 @@
+services:
+  consul-server-01:
+    image: consul:1.15.4
+    container_name: consul-server-01
+    command: "agent -server -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul.log -node=consul-server-01 -bootstrap-expect=3"
+    volumes:
+      - /home/wuzhenhua/docker/consul/server/consul-server-01/data:/consul/data
+      - /home/wuzhenhua/docker/consul/server/consul-server-01/log:/consul/log/
+    networks:
+      - bilibili-network
+    restart: always
+
+  consul-server-02:
+    image: consul:1.15.4
+    container_name: consul-server-02
+    command: "agent -server -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul.log -node=consul-server-02 -bootstrap-expect=3 -retry-join=consul-server-01"
+    volumes:
+      - /home/wuzhenhua/docker/consul/server/consul-server-02/data:/consul/data
+      - /home/wuzhenhua/docker/consul/server/consul-server-02/log:/consul/log/
+    networks:
+      - bilibili-network
+    restart: always
+
+  consul-server-03:
+    image: consul:1.15.4
+    container_name: consul-server-03
+    command: "agent -server -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul.log -node=consul-server-03 -bootstrap-expect=3 -retry-join=consul-server-01"
+    volumes:
+      - /home/wuzhenhua/docker/consul/server/consul-server-03/data:/consul/data
+      - /home/wuzhenhua/docker/consul/server/consul-server-03/log:/consul/log/
+    networks:
+      - bilibili-network
+    restart: always
+
+  consul-client-gateway:
+    image: consul:1.15.4
+    container_name: consul-client-gateway
+    command: "agent -ui -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul.log -node=consul-client-gateway -retry-join=consul-server-01"
+    volumes:
+      - /home/wuzhenhua/docker/consul/client/consul-client-gateway/data:/consul/data
+      - /home/wuzhenhua/docker/consul/client/consul-client-gateway/log:/consul/log/
+    networks:
+      - bilibili-network
+    ports:
+      - 8500:8500
+    restart: always
+
+  consul-client-user:
+    image: consul:1.15.4
+    container_name: consul-client-user
+    command: "agent -ui -client=0.0.0.0 -data-dir=/consul/data -log-file=/consul/log/consul.log -node=consul-client-user -retry-join=consul-server-01"
+    volumes:
+      - /home/wuzhenhua/docker/consul/client/consul-client-user/data:/consul/data
+      - /home/wuzhenhua/docker/consul/client/consul-client-user/log:/consul/log/
+    networks:
+      - bilibili-network
+    ports:
+      - 8501:8500
+    restart: always
+
+networks:
+  bilibili-network:
+    name: bilibili-network

@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.bilibili.exception.handler.GlobalExceptionHandler
+  com.bilibili.exception.handler.GlobalExceptionHandler,\
+  com.bilibili.config.WebConfig
